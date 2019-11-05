@@ -43,6 +43,7 @@ public class ImgSpider {
 	private String filePath="C:\\";
 	//private  String filePath="E:/eclipseworkspace/imgSpider/img/";
 	private final int threadNum=5;
+	private final int imgSize=5*1024;
 	private ExecutorService pool;
 	private ConcurrentHashMap<String,Object> URLMap=new ConcurrentHashMap<>();
 	
@@ -96,11 +97,15 @@ public class ImgSpider {
         	else if(imgUrl.startsWith("/")){
 				imgUrl=getHostName(myURL)+imgUrl;
 			}
+        	if(!imgUrl.startsWith("http")) {
+        		continue;
+        	}
         	downImages(imgUrl);
         }
 	}
 
 	public void getAllImages(String myURL) {
+		System.out.println(myURL);
 		String html=getHtml(myURL);
 		getImages(html,myURL);
 		URLMap.put(myURL,new Object());
@@ -144,7 +149,7 @@ public class ImgSpider {
 		try {
 			URL url = new URL(imgUrl);
 			connection = (HttpURLConnection)url.openConnection();
-			if(connection.getContentLength()>20*1024) {
+			if(connection.getContentLength()>imgSize) {
 				is = connection.getInputStream();
 				if(fileName.matches(".+?((png)|(jpg)|(jpeg)|(gif)|(svg))$")) {
 					file=new File(filePath+"zsy"+UUID.randomUUID().toString().substring(28)+fileName);
@@ -182,7 +187,7 @@ public class ImgSpider {
     	panelURL.add(start);
     	panelURL.add(stop);
     	
-    	//urlField.setText("https://www.nvshens.net/");
+    	//urlField.setText("");
     	
     	start.addActionListener(startEve->{
     		pool=Executors.newFixedThreadPool(threadNum);
