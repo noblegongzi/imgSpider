@@ -46,6 +46,8 @@ public class ImgSpider {
 	private final int imgSize=5*1024;
 	private ExecutorService pool;
 	private ConcurrentHashMap<String,Object> URLMap=new ConcurrentHashMap<>();
+	private ConcurrentHashMap<String,Object> imgURLMap=new ConcurrentHashMap<>();
+	private final Object mapValue=new Object(); 
 	
 	public String getHtml(String myURL) {
         CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -97,7 +99,7 @@ public class ImgSpider {
         	else if(imgUrl.startsWith("/")){
 				imgUrl=getHostName(myURL)+imgUrl;
 			}
-        	if(!imgUrl.startsWith("http")) {
+        	if(!imgUrl.startsWith("http")||imgURLMap.containsKey(imgUrl)) {
         		continue;
         	}
         	downImages(imgUrl);
@@ -108,7 +110,7 @@ public class ImgSpider {
 		System.out.println(myURL);
 		String html=getHtml(myURL);
 		getImages(html,myURL);
-		URLMap.put(myURL,new Object());
+		URLMap.put(myURL,mapValue);
 		String hostName=getHostName(myURL);
 		LinkedList<String> curURLs=new LinkedList<>();
 		Document document = Jsoup.parse(html);
@@ -140,6 +142,7 @@ public class ImgSpider {
 		if(imgUrl==null||imgUrl.equals("")) {
 			return;
 		}
+		imgURLMap.put(imgUrl, mapValue);
 		String fileName = imgUrl.substring(imgUrl.lastIndexOf("."));
 		HttpURLConnection connection=null;
 		InputStream is = null;
@@ -204,6 +207,7 @@ public class ImgSpider {
     			pool.shutdownNow();
     		}
     		URLMap.clear();
+    		imgURLMap.clear();
     	});
     	
     	JPanel panelFilePath=new JPanel();
