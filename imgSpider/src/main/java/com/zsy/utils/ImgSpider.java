@@ -22,8 +22,10 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
+import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -41,9 +43,10 @@ import org.jsoup.select.Elements;
 public class ImgSpider {
 	
 	private String filePath="C:\\";
+	//private String filePath="E:\\test\\";
 	//private  String filePath="E:/eclipseworkspace/imgSpider/img/";
 	private final int threadNum=5;
-	private final int imgSize=5*1024;
+	private final int imgSize=20*1024;
 	private ExecutorService pool;
 	private ConcurrentHashMap<String,Object> URLMap=new ConcurrentHashMap<>();
 	private ConcurrentHashMap<String,Object> imgURLMap=new ConcurrentHashMap<>();
@@ -70,10 +73,8 @@ public class ImgSpider {
                 System.out.println("返回状态不是200");
                 System.out.println(EntityUtils.toString(response.getEntity(), "utf-8"));
             }
-        } catch (ClientProtocolException e) {
-             
-        } catch (IOException e) {
-             
+        } catch (ParseException | IOException e) {
+             e.printStackTrace();
         } finally {
             //6.关闭
             HttpClientUtils.closeQuietly(response);
@@ -99,10 +100,16 @@ public class ImgSpider {
         	else if(imgUrl.startsWith("/")){
 				imgUrl=getHostName(myURL)+imgUrl;
 			}
-        	if(!imgUrl.startsWith("http")||imgURLMap.containsKey(imgUrl)) {
+        	if(imgUrl==null||imgUrl.equals("")||imgURLMap.containsKey(imgUrl)) {
         		continue;
         	}
-        	downImages(imgUrl);
+        	System.out.println(imgUrl);
+        	if(imgUrl.startsWith("http")) {
+        		downImagesByHttp(imgUrl);
+        	}
+        	else {
+				downImagesByBase64(imgUrl);
+			}
         }
 	}
 
@@ -138,10 +145,31 @@ public class ImgSpider {
 		return myURL.substring(0,myURL.indexOf("/",8));
 	}
 	
-	private void downImages(String imgUrl){
-		if(imgUrl==null||imgUrl.equals("")) {
-			return;
+	private void downImagesByBase64(String imgUrl) {
+		// TODO Auto-generated method stub
+		String fileName="."+imgUrl.substring(imgUrl.indexOf('/')+1, imgUrl.indexOf(';'));
+		String fileBase64=imgUrl.substring(imgUrl.indexOf(','));
+		File file=null;
+		FileOutputStream out = null;
+		try {
+			file=new File(filePath+"zsy"+UUID.randomUUID().toString().substring(28)+fileName);
+			out = new FileOutputStream(file);
+			byte[] b=Base64.decodeBase64(fileBase64);
+			out.write(b);
+		} catch (Exception e) {
+			 e.printStackTrace();
 		}
+		finally {
+			try {
+				out.close();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private void downImagesByHttp(String imgUrl){
 		imgURLMap.put(imgUrl, mapValue);
 		String fileName = imgUrl.substring(imgUrl.lastIndexOf("."));
 		HttpURLConnection connection=null;
@@ -167,7 +195,7 @@ public class ImgSpider {
 				}
 			}
 		} catch (Exception e) {
-			 
+			 e.printStackTrace();
 		}
 		finally {
 			try {
@@ -176,6 +204,7 @@ public class ImgSpider {
 				is.close();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 	}
