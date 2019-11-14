@@ -148,7 +148,7 @@ public class ImgSpider {
 	private void downImagesByBase64(String imgUrl) {
 		// TODO Auto-generated method stub
 		String fileName="."+imgUrl.substring(imgUrl.indexOf('/')+1, imgUrl.indexOf(';'));
-		String fileBase64=imgUrl.substring(imgUrl.indexOf(','));
+		String fileBase64=imgUrl.substring(imgUrl.indexOf(',')+1);
 		File file=null;
 		FileOutputStream out = null;
 		try {
